@@ -1,16 +1,14 @@
 require("dotenv").config();
 
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']); // Google DNS
-// Or use Cloudflare: dns.setServers(['1.1.1.1', '1.0.0.1']);
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 
 const connectDB = require("./config/database");
-
-dotenv.config();
+const authRoutes = require("./routes/auth");
+const protect = require("./middleware/auth");
 
 const app = express();
 
@@ -19,6 +17,18 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// Authentication routes
+app.use("/api/auth", authRoutes);
+
+// Protected test route
+app.get("/api/protected", protect, (req, res) => {
+    res.json({
+        message: "You accessed a protected route!",
+        user: req.user
+    });
+});
+
+// Test root route
 app.get("/", (req, res) => {
     res.json({
         message: "MediBridge API is running"
