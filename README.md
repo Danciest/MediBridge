@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MediBridge — Starter MVP
 
 A front-end starter for the MediBridge college project.
@@ -55,3 +56,6 @@ Suggested future features:
 7. AI medicine matching
 8. Analytics dashboard
 9. Simulated/real reward wallet
+=======
+# MediBridge
+>>>>>>> 9db5a1679797fabe013e11f1a2e834bb5586a656
