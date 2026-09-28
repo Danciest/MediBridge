@@ -1,6 +1,6 @@
 <<<<<<< HEAD
 # MediBridge — Starter MVP
-
+Sample text
 A front-end starter for the MediBridge college project.
 
 ## Current features
