@@ -13,8 +13,9 @@ const requests = [
   {id:3,medicine:"Amoxicillin",ngo:"Health First",qty:50,status:"REJECTED",date:"15 Sep 2026"}
 ];
 
-let currentRole = localStorage.getItem("mb_role") || "DONOR";
-let currentPage = "dashboard";
+const savedUser = JSON.parse(localStorage.getItem("mb_user"));
+
+let currentRole = savedUser ? savedUser.role : null;let currentPage = "dashboard";
 
 function navPublic() {
   return `<nav class="navbar">
@@ -54,17 +55,100 @@ function showAuth(mode) {
     <h1>${mode === "login" ? "Welcome Back" : "Create your account"}</h1>
     <p>${mode === "login" ? "Login to your MediBridge account." : "Start contributing to MediBridge."}</p>
     ${mode === "register" ? `<div class="form-group"><label>Name</label><input id="authName" placeholder="Your name"></div>
-      <div class="form-group"><label>Account Type</label><select id="authRole"><option value="DONOR">Donor</option><option value="NGO">NGO</option><option value="PHARMACY">Pharmacy</option><option value="Medical Centre">Medical Centre</option></select></div>` : ""}
+      <div class="form-group"><label>Account Type</label><select id="authRole"><option value="DONOR">Donor</option><option value="NGO">NGO</option><option value="PHARMACY">Pharmacy</option><option value="HOSPITAL">Medical Centre</option></select></div>` : ""}
     <div class="form-group"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"></div>
     <div class="form-group"><label>Password</label><input id="authPassword" type="password" placeholder="••••••••"></div>
-    <button class="btn btn-primary" style="width:100%" onclick="loginDemo()">${mode === "login" ? "Login" : "Create Account"}</button>
+    <button class="btn btn-primary" style="width:100%" onclick="${mode === "login" ? "loginUser()" : "registerUser()"}">
+      ${mode === "login" ? "Login" : "Create Account"}
+    </button>
     <p style="text-align:center;margin:18px 0 0">Demo project — authentication is simulated locally.</p>
   </div></div>`;
 }
 
-function loginDemo() {
-  const role = document.getElementById("authRole")?.value || "DONOR";
-  currentRole = role; localStorage.setItem("mb_role", role); currentPage = "dashboard"; dashboard();
+async function registerUser() {
+  const name = document.getElementById("authName").value;
+  const email = document.getElementById("authEmail").value;
+  const password = document.getElementById("authPassword").value;
+  const role = document.getElementById("authRole").value;
+
+  try {
+    const response = await fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showToast(data.message || "Registration failed");
+      return;
+    }
+
+    showToast("Account created successfully!");
+
+    console.log("Registered user:", data.user);
+
+    // Go to login
+    setTimeout(() => {
+      showAuth("login");
+    }, 1000);
+
+  } catch (error) {
+    console.error(error);
+    showToast("Could not connect to server");
+  }
+}
+
+async function loginUser() {
+  const email = document.getElementById("authEmail").value;
+  const password = document.getElementById("authPassword").value;
+
+  try {
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      showToast(data.message || "Login failed");
+      return;
+    }
+
+    // Save JWT
+    localStorage.setItem("mb_token", data.token);
+
+    // Save user information
+    localStorage.setItem("mb_user", JSON.stringify(data.user));
+
+    currentRole = data.user.role;
+    localStorage.setItem("mb_role", data.user.role);
+
+    showToast("Login successful!");
+
+    setTimeout(() => {
+      dashboard();
+    }, 500);
+
+  } catch (error) {
+    console.error(error);
+    showToast("Could not connect to server");
+  }
 }
 
 function shell(content) {
@@ -80,31 +164,167 @@ function shell(content) {
       <div class="side-nav">${nav.map(([id,ic,label])=>`<button class="${currentPage===id?'active':''}" onclick="navigate('${id}')">${ic} <span>${label}</span></button>`).join("")}
       <button onclick="goPublic()">↩ <span>Log out</span></button></div>
     </aside>
-    <div class="main"><div class="topbar"><select onchange="switchRole(this.value)"><option value="DONOR" ${currentRole==="DONOR"?"selected":""}>Donor User</option><option value="NGO" ${currentRole==="NGO"?"selected":""}>NGO User</option><option value="ADMIN" ${currentRole==="ADMIN"?"selected":""}>Admin User</option></select><div class="user-pill"><div class="avatar">${currentRole[0]}</div>${currentRole}</div></div>
-    <div class="content">${content}</div></div></div><div class="toast" id="toast"></div>`;
+<div class="main">
+    <div class="topbar">
+        <div class="user-pill">
+            <div class="avatar">${currentRole[0]}</div>
+            ${currentRole}
+        </div>
+    </div>    <div class="content">${content}</div></div></div><div class="toast" id="toast"></div>`;
 }
 
 function dashboard() {
-  currentPage="dashboard";
-  const isNgo=currentRole==="NGO", isAdmin=currentRole==="ADMIN";
-  if(isAdmin) return adminDashboard();
-  shell(`<div class="page-head"><div><h1>${isNgo?"NGO Dashboard":"Donor Dashboard"}</h1><p>${isNgo?"Find and request medicines for your community.":"Welcome back. Here is an overview of your contributions."}</p></div><button class="btn btn-primary" onclick="navigate('${isNgo?"medicines":"donate"}')">${isNgo?"Browse Medicines":"+ Donate Medicine"}</button></div>
-  <div class="stats">
-    <div class="stat"><small>${isNgo?"Total Requests":"Total Donations"}</small><strong>${isNgo?5:12}</strong></div>
-    <div class="stat"><small>${isNgo?"Approved":"Pending Requests"}</small><strong>${isNgo?3:3}</strong></div>
-    <div class="stat"><small>${isNgo?"Pending":"Completed"}</small><strong>${isNgo?2:8}</strong></div>
-    <div class="stat"><small>${isNgo?"Received":"Reward Points"}</small><strong>${isNgo?1:250}</strong></div>
-  </div>
-  <div class="grid-2">
-    <div class="card"><h2>${isNgo?"Recent Requests":"Recent Donations"}</h2>${isNgo?requestTable():donationTable()}</div>
-    <div class="card"><h2>${isNgo?"Community Impact":"Your Impact"}</h2>
-      <div style="display:grid;gap:15px">
-        <div><b>♧</b> Medicines ${isNgo?"received":"donated"} <strong style="float:right">${isNgo?"120":"450"} units</strong></div>
-        <div><b>♥</b> People helped <strong style="float:right">~120</strong></div>
-        <div><b>♲</b> Waste reduced <strong style="float:right">~12 kg</strong></div>
-      </div>
-    </div>
-  </div>`);
+
+    currentPage = "dashboard";
+
+    const isNgo = currentRole === "NGO";
+    const isAdmin = currentRole === "ADMIN";
+    const isPharmacy = currentRole === "PHARMACY";
+    const isHospital = currentRole === "HOSPITAL";
+    const isDonor = currentRole === "DONOR";
+
+    if (isAdmin) return adminDashboard();
+
+    let title;
+    let description;
+    let buttonText;
+    let buttonPage;
+    let stat1;
+    let stat2;
+    let stat3;
+    let stat4;
+    let recentTitle;
+    let impactTitle;
+
+    if (isNgo) {
+        title = "NGO Dashboard";
+        description = "Find and request medicines for your community.";
+        buttonText = "Browse Medicines";
+        buttonPage = "medicines";
+
+        stat1 = "Total Requests";
+        stat2 = "Approved";
+        stat3 = "Pending";
+        stat4 = "Received";
+
+        recentTitle = "Recent Requests";
+        impactTitle = "Community Impact";
+
+    } else if (isPharmacy) {
+        title = "Pharmacy Dashboard";
+        description = "Manage your medicines and donations.";
+        buttonText = "+ Add Medicine";
+        buttonPage = "medicines";
+
+        stat1 = "Medicines Listed";
+        stat2 = "Pending Donations";
+        stat3 = "Completed";
+        stat4 = "Reward Points";
+
+        recentTitle = "Recent Medicines";
+        impactTitle = "Pharmacy Impact";
+
+    } else if (isHospital) {
+        title = "Hospital Dashboard";
+        description = "Request and manage medicines for your patients.";
+        buttonText = "Request Medicine";
+        buttonPage = "requests";
+
+        stat1 = "Total Requests";
+        stat2 = "Approved";
+        stat3 = "Pending";
+        stat4 = "Received";
+
+        recentTitle = "Recent Requests";
+        impactTitle = "Hospital Impact";
+
+    } else {
+        title = "Donor Dashboard";
+        description = "Welcome back. Here is an overview of your contributions.";
+        buttonText = "+ Donate Medicine";
+        buttonPage = "donate";
+
+        stat1 = "Total Donations";
+        stat2 = "Pending Requests";
+        stat3 = "Completed";
+        stat4 = "Reward Points";
+
+        recentTitle = "Recent Donations";
+        impactTitle = "Your Impact";
+    }
+
+    shell(`
+        <div class="page-head">
+            <div>
+                <h1>${title}</h1>
+                <p>${description}</p>
+            </div>
+
+            <button class="btn btn-primary"
+                onclick="navigate('${buttonPage}')">
+                ${buttonText}
+            </button>
+        </div>
+
+        <div class="stats">
+
+            <div class="stat">
+                <small>${stat1}</small>
+                <strong>12</strong>
+            </div>
+
+            <div class="stat">
+                <small>${stat2}</small>
+                <strong>3</strong>
+            </div>
+
+            <div class="stat">
+                <small>${stat3}</small>
+                <strong>8</strong>
+            </div>
+
+            <div class="stat">
+                <small>${stat4}</small>
+                <strong>250</strong>
+            </div>
+
+        </div>
+
+        <div class="grid-2">
+
+            <div class="card">
+                <h2>${recentTitle}</h2>
+                ${isNgo || isHospital ? requestTable() : donationTable()}
+            </div>
+
+            <div class="card">
+                <h2>${impactTitle}</h2>
+
+                <div style="display:grid;gap:15px">
+
+                    <div>
+                        <b>♧</b>
+                        Medicines donated
+                        <strong style="float:right">450 units</strong>
+                    </div>
+
+                    <div>
+                        <b>♥</b>
+                        People helped
+                        <strong style="float:right">~120</strong>
+                    </div>
+
+                    <div>
+                        <b>♲</b>
+                        Waste reduced
+                        <strong style="float:right">~12 kg</strong>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    `);
 }
 
 function donationTable(){ return `<table><thead><tr><th>Medicine</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead><tbody>
@@ -198,7 +418,7 @@ function adminDashboard(){
 
 function users(){currentPage="users";shell(`<div class="page-head"><div><h1>Manage Users</h1><p>Admin view of MediBridge accounts.</p></div></div><div class="card"><table><thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead><tbody><tr><td>Rahul Sen</td><td>Donor</td><td><span class="badge available">Active</span></td></tr><tr><td>Helping Hands</td><td>NGO</td><td><span class="badge available">Verified</span></td></tr><tr><td>MediCare Pharmacy</td><td>Pharmacy</td><td><span class="badge available">Active</span></td></tr></tbody></table></div>`);}
 
-function switchRole(role){currentRole=role;localStorage.setItem("mb_role",role);navigate("dashboard");}
+//function switchRole(role){currentRole=role;localStorage.setItem("mb_role",role);navigate("dashboard");}
 function navigate(page){
   currentPage=page;
   if(page==="dashboard")dashboard();
