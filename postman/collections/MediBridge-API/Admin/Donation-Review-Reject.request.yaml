@@ -1,0 +1,25 @@
+$kind: http-request
+name: Donations - Reject
+order: 1230
+method: PATCH
+url: '{{baseUrl}}/admin/medicines/{{medicineId}}/review'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    { "action": "REJECT", "reason": "{{rejectionReason}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Donation rejection records a reason', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.medicine.verificationStatus).to.eql('REJECTED');
+      pm.expect(body.medicine.reviewReason).to.eql(pm.variables.get('rejectionReason'));

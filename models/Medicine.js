@@ -4,21 +4,43 @@ const medicineSchema = new mongoose.Schema({
 
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 1,
+        maxlength: 120
     },
 
-    genericName: String,
+    manufacturer: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 1,
+        maxlength: 120
+    },
 
-    category: String,
+    genericName: { type: String, trim: true, maxlength: 120 },
+
+    category: { type: String, trim: true, maxlength: 80 },
 
     quantity: {
         type: Number,
-        required: true
+        required: true,
+        min: 1,
+        max: 1000000,
+        validate: { validator: Number.isSafeInteger, message: "Quantity must be a safe integer." }
     },
 
     unit: {
         type: String,
         default: "units"
+    },
+
+    batchNumber: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 1,
+        maxlength: 100
     },
 
     expiryDate: {
@@ -39,8 +61,8 @@ const medicineSchema = new mongoose.Schema({
     },
 
     location: {
-        city: String,
-        address: String
+        city: { type: String, trim: true, maxlength: 120 },
+        address: { type: String, trim: true, maxlength: 250 }
     },
 
     status: {
@@ -49,7 +71,8 @@ const medicineSchema = new mongoose.Schema({
             "AVAILABLE",
             "REQUESTED",
             "ALLOCATED",
-            "EXPIRED"
+            "EXPIRED",
+            "CLAIMED"
         ],
         default: "AVAILABLE"
     },
@@ -62,6 +85,13 @@ const medicineSchema = new mongoose.Schema({
             "REJECTED"
         ],
         default: "PENDING"
+    },
+
+    reviewReason: {
+        type: String,
+        trim: true,
+        maxlength: 500,
+        default: ""
     }
 
 }, {

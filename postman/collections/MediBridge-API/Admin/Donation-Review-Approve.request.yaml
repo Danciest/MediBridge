@@ -1,0 +1,24 @@
+$kind: http-request
+name: Donations - Approve
+order: 1220
+method: PATCH
+url: '{{baseUrl}}/admin/medicines/{{medicineId}}/review'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: '{ "action": "APPROVE" }'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Pending donation approved', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.medicine.verificationStatus).to.eql('VERIFIED');
+      pm.test('Reward service result is included', () => pm.expect(body.reward).to.be.an('object'));

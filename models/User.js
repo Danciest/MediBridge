@@ -3,13 +3,20 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 100
     },
 
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true,
+        lowercase: true,
+        maxlength: 254,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     },
 
     password: {
@@ -29,20 +36,29 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
-    phone: String,
+    phone: { type: String, trim: true, maxlength: 40 },
 
-    address: String,
+    address: { type: String, trim: true, maxlength: 250 },
 
-    city: String,
+    city: { type: String, trim: true, maxlength: 120 },
 
     isVerified: {
         type: Boolean,
         default: false
     },
 
+    active: {
+        type: Boolean,
+        default: true,
+        index: true
+    },
+
     rewardPoints: {
         type: Number,
-        default: 0
+        default: 0,
+        min: [0, "Reward points cannot be negative."],
+        max: Number.MAX_SAFE_INTEGER,
+        validate: { validator: Number.isSafeInteger, message: "Reward points must be a safe integer." }
     }
 
 }, {

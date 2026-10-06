@@ -1,0 +1,23 @@
+$kind: http-request
+name: Submit Medicine Report
+order: 1700
+method: POST
+url: '{{baseUrl}}/reports'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{donorToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    { "type": "MEDICINE", "description": "Please review this donation.", "relatedMedicine": "{{relatedMedicineId}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Authenticated user can submit a report', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('reportId', pm.response.json().report._id);

@@ -1,0 +1,27 @@
+$kind: http-request
+name: 'Login (Admin)'
+order: 1000
+method: POST
+url: '{{baseUrl}}/auth/login'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{adminEmail}}",
+      "password": "{{adminPassword}}"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Login succeeded', () => pm.response.to.have.status(200));
+      const res = pm.response.json();
+      if (res.token) {
+          pm.collectionVariables.set('adminToken', res.token);
+          console.log('Admin JWT saved → adminToken');
+      } else {
+          console.error('Login failed:', JSON.stringify(res));
+      }

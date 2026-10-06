@@ -1,0 +1,27 @@
+$kind: collection
+name: MediBridge API
+description: |-
+  MediBridge backend API collection.
+  Set baseUrl and private test account credentials in local Postman variables.
+  Run **Auth / Login (Admin)** or **Auth / Login (Donor)** before protected requests.
+  The login requests save JWTs to adminToken and donorToken for this collection.
+variables:
+  baseUrl: 'http://localhost:5000/api'
+  adminToken: ""
+  donorToken: ""
+  adminEmail: ""
+  adminPassword: ""
+  donorEmail: ""
+  donorPassword: ""
+  userId: ""
+  medicineId: ""
+  requestId: ""
+  reportId: ""
+  relatedMedicineId: ""
+  newRole: DONOR
+  search: ""
+  role: ""
+  rejectionReason: "Reason for rejecting this donation"
+  points: "10"
+  reason: "Documented correction"
+  redemptionKey: "redeem-test-key-0001"

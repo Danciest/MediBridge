@@ -1,0 +1,22 @@
+$kind: http-request
+name: Users - Change Role/Status
+order: 1120
+method: PATCH
+url: '{{baseUrl}}/admin/users/{{userId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    { "role": "{{newRole}}", "active": true }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can update allowed user fields', () => pm.response.to.have.status(200));

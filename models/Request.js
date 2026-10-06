@@ -1,52 +1,54 @@
 const mongoose = require("mongoose");
 
 const requestSchema = new mongoose.Schema({
-
-    medicineId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Medicine",
-        required: true
-    },
-
-    requesterId: {
+    requester: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
+        index: true
     },
-
-    requesterType: {
+    requesterRole: {
         type: String,
         enum: ["NGO", "HOSPITAL"],
         required: true
     },
-
+    medicineName: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 1,
+        maxlength: 120
+    },
     quantity: {
         type: Number,
+        required: true,
+        min: [1, "Quantity must be at least one."],
+        max: [1000000, "Quantity cannot exceed 1000000."],
+        validate: { validator: Number.isSafeInteger, message: "Quantity must be a safe integer." }
+    },
+    urgency: {
+        type: String,
+        enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
         required: true
     },
-
-    purpose: String,
-
+    description: {
+        type: String,
+        trim: true,
+        maxlength: [2000, "Description cannot exceed 2000 characters."]
+    },
     status: {
         type: String,
-        enum: [
-            "PENDING",
-            "APPROVED",
-            "REJECTED",
-            "FULFILLED"
-        ],
-        default: "PENDING"
+        enum: ["PENDING", "MATCHED", "ACCEPTED", "FULFILLING", "COMPLETED", "CANCELLED"],
+        default: "PENDING",
+        index: true
     },
-
-    reviewedBy: {
+    matchedMedicine: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
+        ref: "Medicine",
+        default: null
+    }
+}, { timestamps: true });
 
-    reviewedAt: Date
-
-}, {
-    timestamps: true
-});
+requestSchema.index({ status: 1, urgency: -1, createdAt: -1 });
 
 module.exports = mongoose.model("Request", requestSchema);

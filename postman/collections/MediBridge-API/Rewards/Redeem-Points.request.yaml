@@ -1,0 +1,26 @@
+$kind: http-request
+name: Redeem Points (Idempotent)
+order: 2100
+method: POST
+url: '{{baseUrl}}/rewards/redeem'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{donorToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Idempotency-Key
+    value: '{{redemptionKey}}'
+body:
+  type: json
+  content: '{ "points": 10 }'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Redemption is processed once for this key', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.transaction.type).to.eql('REDEEM');
+      pm.expect(body.replayed).to.be.a('boolean');

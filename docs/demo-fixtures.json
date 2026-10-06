@@ -1,0 +1,30 @@
+{
+  "notice": "Synthetic demonstration fixtures only. These are examples, not credentials and not automatically loaded into MongoDB.",
+  "accounts": [
+    { "role": "DONOR", "name": "Demo Donor One", "email": "donor1@example.invalid" },
+    { "role": "DONOR", "name": "Demo Donor Two", "email": "donor2@example.invalid" },
+    { "role": "DONOR", "name": "Demo Donor Three", "email": "donor3@example.invalid" },
+    { "role": "PHARMACY", "name": "Demo Pharmacy One", "email": "pharmacy1@example.invalid" },
+    { "role": "PHARMACY", "name": "Demo Pharmacy Two", "email": "pharmacy2@example.invalid" },
+    { "role": "NGO", "name": "Demo NGO One", "email": "ngo1@example.invalid" },
+    { "role": "NGO", "name": "Demo NGO Two", "email": "ngo2@example.invalid" },
+    { "role": "HOSPITAL", "name": "Demo Hospital One", "email": "hospital1@example.invalid" },
+    { "role": "HOSPITAL", "name": "Demo Hospital Two", "email": "hospital2@example.invalid" },
+    { "role": "ADMIN", "name": "Demo Administrator", "email": "admin@example.invalid", "provisioning": "Create only in a disposable local demo database using an approved admin provisioning process; public registration rejects ADMIN." }
+  ],
+  "medicines": [
+    { "medicineName": "Example tablets", "manufacturer": "Example Labs", "quantity": 24, "batchNumber": "DEMO-001", "expiryDate": "2030-12-31", "pickupLocation": "Demo City", "verificationStatus": "PENDING" },
+    { "medicineName": "Example syrup", "manufacturer": "Sample Health", "quantity": 8, "batchNumber": "DEMO-002", "expiryDate": "2030-10-31", "pickupLocation": "Sample Town", "verificationStatus": "PENDING" },
+    { "medicineName": "Example capsules", "manufacturer": "Example Labs", "quantity": 50, "batchNumber": "DEMO-003", "expiryDate": "2031-06-30", "pickupLocation": "Demo City", "verificationStatus": "PENDING" }
+  ],
+  "requests": [
+    { "medicineName": "Example tablets", "quantity": 5, "urgency": "MEDIUM", "description": "Synthetic demonstration request" },
+    { "medicineName": "Example syrup", "quantity": 3, "urgency": "LOW", "description": "Synthetic demonstration request" },
+    { "medicineName": "Example capsules", "quantity": 10, "urgency": "HIGH", "description": "Synthetic demonstration request" }
+  ],
+  "otherRecords": {
+    "rewardTransactions": ["EARN after an admin approves an eligible donor donation", "REDEEM by the donation owner with a unique Idempotency-Key"],
+    "report": { "type": "OTHER", "description": "Synthetic issue report for the demo" }
+  },
+  "passwords": "Intentionally omitted. Set local-only demo passwords yourself; never commit them."
+}

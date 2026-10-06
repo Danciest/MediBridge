@@ -1,0 +1,23 @@
+$kind: http-request
+name: Reports - Resolve and Add Notes
+order: 1610
+method: PATCH
+url: '{{baseUrl}}/admin/reports/{{reportId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    { "status": "RESOLVED", "adminNotes": "Reviewed and resolved." }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can resolve a report', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().report.status).to.eql('RESOLVED');

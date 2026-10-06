@@ -1,0 +1,15 @@
+$kind: http-request
+name: Security - Donor Gets 403
+order: 1810
+method: GET
+url: '{{baseUrl}}/admin/statistics'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{donorToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Non-admin cannot access admin API', () => pm.response.to.have.status(403));

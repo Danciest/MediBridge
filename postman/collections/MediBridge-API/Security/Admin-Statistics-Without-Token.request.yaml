@@ -1,0 +1,10 @@
+$kind: http-request
+name: Security - No Token Gets 401
+order: 1800
+method: GET
+url: '{{baseUrl}}/admin/statistics'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Unauthenticated admin request is rejected', () => pm.response.to.have.status(401));

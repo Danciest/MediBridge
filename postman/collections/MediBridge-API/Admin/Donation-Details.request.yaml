@@ -1,0 +1,18 @@
+$kind: http-request
+name: Donations - Details
+order: 1210
+method: GET
+url: '{{baseUrl}}/admin/medicines/{{medicineId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can view donation details', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.medicine).to.be.an('object');
+      pm.expect(body.relatedRequests).to.be.an('array');

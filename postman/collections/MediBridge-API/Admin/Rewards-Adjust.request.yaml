@@ -1,0 +1,23 @@
+$kind: http-request
+name: Rewards - Adjust Points
+order: 1510
+method: POST
+url: '{{baseUrl}}/admin/rewards/adjust'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    { "userId": "{{userId}}", "points": {{points}}, "reason": "{{reason}}" }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Adjustment is recorded by the reward service', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().transaction.type).to.eql('ADMIN_ADJUSTMENT');

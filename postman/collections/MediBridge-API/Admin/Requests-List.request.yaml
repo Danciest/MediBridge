@@ -1,0 +1,18 @@
+$kind: http-request
+name: Requests - List
+order: 1300
+method: GET
+url: '{{baseUrl}}/admin/requests?page=1&limit=20'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can list requests', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.requests).to.be.an('array');
+      if (body.requests[0]) pm.collectionVariables.set('requestId', body.requests[0]._id);

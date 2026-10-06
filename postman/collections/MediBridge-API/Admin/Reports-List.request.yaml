@@ -1,0 +1,18 @@
+$kind: http-request
+name: Reports - List
+order: 1600
+method: GET
+url: '{{baseUrl}}/admin/reports?page=1&limit=20'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can list reports', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.reports).to.be.an('array');
+      if (body.reports[0]) pm.collectionVariables.set('reportId', body.reports[0]._id);

@@ -1,0 +1,16 @@
+$kind: http-request
+name: Requests - Details
+order: 1310
+method: GET
+url: '{{baseUrl}}/admin/requests/{{requestId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{adminToken}}'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test('Admin can view request details', () => pm.response.to.have.status(200));
+      pm.expect(pm.response.json().request).to.be.an('object');
