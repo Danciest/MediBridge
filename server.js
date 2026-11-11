@@ -112,7 +112,8 @@ async function startServer() {
 
 if (require.main === module) {
     startServer().catch(error => {
-        console.error("MediBridge API failed to start:", error.name || "Error");
+        console.error("MediBridge API failed to start:");
+        console.error(error.stack || error);
         process.exitCode = 1;
     });
 }

@@ -133,6 +133,7 @@ td { padding:13px 10px; border-bottom:1px solid #edf1ee; }
 .badge { display:inline-block; border-radius:999px; padding:5px 8px; font-size:10px; font-weight:700; }
 .available, .approved { background:#e7f8ed; color:#18864a; }
 .pending { background:#fff4db; color:#a86d00; }
+.rejected { background:#ffecef; color:#c42f40; }
 .requested { background:#ffecef; color:#c42f40; }
 .allocated { background:#e9f0ff; color:#4169c1; }
 .expired { background:#eee; color:#666; }
@@ -143,6 +144,21 @@ td { padding:13px 10px; border-bottom:1px solid #edf1ee; }
 .medicine-card h3 { margin:14px 0 6px; font-size:16px; }
 .medicine-meta { color:var(--muted); font-size:12px; line-height:1.8; }
 .toolbar { display:grid; grid-template-columns:1fr 170px 150px auto; gap:10px; margin-bottom:18px; }
+.donation-filter-summary { color:var(--muted); font-size:13px; font-weight:600; margin:4px 0 9px; }
+.donation-search { display:flex; gap:10px; margin-bottom:14px; max-width:620px; }
+.donation-search input { flex:1; min-width:0; }
+.donation-filter-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+.donation-filter-tab { border:1px solid var(--line); border-radius:999px; background:#fff; color:var(--ink); padding:9px 15px; font:inherit; font-size:13px; cursor:pointer; }
+.donation-filter-tab:hover { border-color:var(--green); color:var(--green-dark); }
+.donation-filter-tab.active { background:var(--green); border-color:var(--green); color:#fff; }
+.donation-filter-tab:focus-visible { outline:3px solid rgba(24,134,74,.28); outline-offset:2px; }
+.donor-donations-grid { align-items:start; }
+.donor-donation-card { min-width:0; }
+.donation-review-status { display:flex; align-items:center; gap:9px; margin:12px 0 4px; }
+.donation-label { color:var(--muted); font-size:12px; }
+.donation-reward, .donation-review-reason { margin:8px 0 0; color:var(--ink); font-size:13px; }
+.donation-review-reason { color:var(--muted); }
+.donor-donations-empty { background:#fff; border:1px solid var(--line); border-radius:14px; }
 
 .empty { padding:50px 20px; text-align:center; color:var(--muted); }
 
@@ -168,5 +184,6 @@ td { padding:13px 10px; border-bottom:1px solid #edf1ee; }
   .content { padding:18px; }
   .feature-grid, .stats, .medicine-grid { grid-template-columns:1fr; }
   .toolbar { grid-template-columns:1fr; }
+  .donation-search { flex-direction:column; }
   .hero h1 { font-size:37px; }
 }

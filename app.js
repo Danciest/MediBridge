@@ -6,6 +6,11 @@ let currentRole = currentUser?.role || null;
 let currentPage = "dashboard";
 let matchPanel = null;
 let pendingRedemption = null;
+let donorDonationReviewFilter = "ALL";
+let donorDonationSearch = "";
+let donorDonationsCache = [];
+let donorRewardsByMedicine = new Map();
+let donorRewardHistoryAvailable = true;
 
 function readSavedUser() {
   try { return JSON.parse(sessionStorage.getItem("mb_user") || localStorage.getItem("mb_user") || "null"); }
@@ -158,21 +163,100 @@ async function addMedicine(event) {
 
 async function medicinesPage() {
   if (!requireRole(["DONOR", "PHARMACY", "NGO", "HOSPITAL", "ADMIN"])) return;
-  currentPage = "medicines"; loadingPage("Donations & Medicines");
+  if (currentRole === "DONOR" && document.getElementById("donorMedicineSearch")) {
+    donorDonationSearch = document.getElementById("donorMedicineSearch").value;
+  }
+  currentPage = "medicines";
+  if (currentRole === "DONOR") shell(`<div class="page-head"><div><h1>My Donations</h1></div></div><div class="card" aria-live="polite">Loading your donations...</div>`);
+  else loadingPage("Donations & Medicines");
   try {
     const admin = currentRole === "ADMIN", own = ["DONOR", "PHARMACY"].includes(currentRole);
+    if (currentRole === "DONOR") {
+      const data = await API.get("/medicines/my?limit=100");
+      donorDonationsCache = data.medicines || [];
+      donorDonationReviewFilter = "ALL";
+      donorRewardsByMedicine = new Map();
+      donorRewardHistoryAvailable = true;
+      try {
+        const rewardHistory = await API.get("/rewards/history?limit=100");
+        for (const transaction of rewardHistory.transactions || []) {
+          const medicineId = transaction.medicine?._id || transaction.medicine;
+          if (transaction.type === "EARN" && medicineId) donorRewardsByMedicine.set(String(medicineId), transaction);
+        }
+      } catch (_) {
+        donorRewardHistoryAvailable = false;
+      }
+      renderDonorDonations();
+      return;
+    }
     const params = new URLSearchParams();
     const search = document.getElementById("medicineSearch")?.value || "";
     const status = document.getElementById("medicineStatus")?.value || "";
     if (search) params.set(admin ? "name" : "search", search);
     if (status) params.set(admin ? "verificationStatus" : "status", status);
-    const endpoint = admin ? "/admin/medicines" : own && currentRole === "DONOR" ? "/medicines/my" : "/medicines";
+    const endpoint = admin ? "/admin/medicines" : "/medicines";
     const data = await API.get(`${endpoint}${params.size ? `?${params}` : ""}`);
     const list = data.medicines || [];
     shell(`<div class="page-head"><div><h1>${admin ? "Donation Management" : own && currentRole === "DONOR" ? "My Donations" : "Available Medicines"}</h1><p>${admin ? "Review contributions and track verification." : own ? "See all submitted contributions and their review status." : "Browse available medicine from the platform."}</p></div>${own ? `<button class="btn btn-primary" onclick="navigate('donate')">＋ Add Medicine</button>` : ""}</div>
       <div class="toolbar"><input id="medicineSearch" placeholder="Search by medicine name" value="${esc(search)}"><select id="medicineStatus"><option value="">${admin ? "All review states" : "All statuses"}</option>${(admin ? ["PENDING", "VERIFIED", "REJECTED"] : ["AVAILABLE", "REQUESTED", "ALLOCATED", "EXPIRED"]).map(value => `<option ${value === status ? "selected" : ""}>${value}</option>`).join("")}</select><button class="btn btn-primary" onclick="medicinesPage()">Search</button></div>
       ${admin ? medicineTable(list.map(item => ({ ...item, sourceId: item.sourceId })), true) : list.length ? `<div class="medicine-grid">${list.map(item => `<div class="card medicine-card"><div class="medicine-icon">💊</div><h3>${esc(item.name)}</h3><div class="medicine-meta">${esc(item.manufacturer || "")}<br>Quantity: ${esc(item.quantity)} units<br>Expiry: ${dateText(item.expiryDate)}<br>Location: ${esc(item.location?.city || item.location?.address || "—")}</div><div style="margin:12px 0">${statusBadge(item.verificationStatus || item.status)}</div>${!own && ["NGO", "HOSPITAL"].includes(currentRole) && item.status === "AVAILABLE" ? `<button class="btn btn-primary btn-small" data-name="${esc(item.name)}" onclick="startRequest('${esc(item._id)}',this)">Request</button>` : ""}</div>`).join("")}</div>` : `<div class="empty">No medicines found.</div>`}`);
-  } catch (error) { pageError("Medicines", error, "medicinesPage"); }
+  } catch (error) {
+    if (currentRole === "DONOR") {
+      shell(`<div class="page-head"><div><h1>My Donations</h1></div></div><div class="card" role="alert"><p>Unable to load your donations. Please try again.</p><button class="btn btn-primary" onclick="medicinesPage()">Try Again</button></div>`);
+      return;
+    }
+    pageError("Medicines", error, "medicinesPage");
+  }
+}
+
+function renderDonorDonations() {
+  const pendingCount = donorDonationsCache.filter(item => item.verificationStatus === "PENDING").length;
+  const filter = donorDonationReviewFilter;
+  const byStatus = filter === "ALL"
+    ? donorDonationsCache
+    : donorDonationsCache.filter(item => item.verificationStatus === filter);
+  const searchTerm = donorDonationSearch.trim().toLocaleLowerCase();
+  const visibleDonations = searchTerm
+    ? byStatus.filter(item => String(item.name || "").toLocaleLowerCase().includes(searchTerm))
+    : byStatus;
+  const filterTabs = [
+    ["ALL", "All"], ["PENDING", "Pending"], ["VERIFIED", "Approved"], ["REJECTED", "Rejected"]
+  ];
+  let emptyMessage = "";
+  if (!donorDonationsCache.length) emptyMessage = "You haven't donated any medicines yet.";
+  else if (!byStatus.length && filter === "PENDING") emptyMessage = "No pending donations.";
+  else if (!visibleDonations.length && filter === "PENDING") emptyMessage = "No pending donations match your search.";
+  else if (!visibleDonations.length && filter === "VERIFIED") emptyMessage = searchTerm ? "No approved donations match your search." : "No approved donations.";
+  else if (!visibleDonations.length && filter === "REJECTED") emptyMessage = searchTerm ? "No rejected donations match your search." : "No rejected donations.";
+  else if (!visibleDonations.length && searchTerm) emptyMessage = "No donations match your search.";
+  const donationCards = visibleDonations.map(item => {
+    const reviewStatus = item.verificationStatus;
+    const label = reviewStatus === "VERIFIED" ? "Approved" : reviewStatus === "PENDING" ? "Pending" : reviewStatus === "REJECTED" ? "Rejected" : "Unknown";
+    const reward = donorRewardsByMedicine.get(String(item._id));
+    const rewardLabel = reviewStatus === "PENDING"
+      ? "Awaiting approval"
+      : reward?.points > 0
+        ? `+${reward.points} points`
+        : donorRewardHistoryAvailable
+          ? "No reward recorded"
+          : "Reward information unavailable";
+    return `<article class="card medicine-card donor-donation-card"><div class="medicine-icon" aria-hidden="true">💊</div><h3>${esc(item.name)}</h3><div class="medicine-meta">${esc(item.manufacturer || "")}<br>Quantity: ${esc(item.quantity)} units<br>Expiry: ${dateText(item.expiryDate)}<br>Location: ${esc(item.location?.city || item.location?.address || "—")}</div><div class="donation-review-status"><span class="donation-label">Review status</span>${statusBadge(label)}</div><p class="donation-reward"><strong>Reward:</strong> ${esc(rewardLabel)}</p>${reviewStatus === "REJECTED" && item.reviewReason ? `<p class="donation-review-reason"><strong>Review note:</strong> ${esc(item.reviewReason)}</p>` : ""}</article>`;
+  }).join("");
+  shell(`<div class="page-head"><div><h1>My Donations</h1><p>Track your medicine donations and admin review.</p></div><button class="btn btn-primary" onclick="navigate('donate')">＋ Add Medicine</button></div>
+    <div class="donation-filter-summary" aria-live="polite">Pending Donations (${pendingCount})</div>
+    <div class="donation-search"><input id="donorMedicineSearch" type="search" aria-label="Search your donations by medicine name" placeholder="Search by medicine name" value="${esc(donorDonationSearch)}" oninput="updateDonorDonationSearch(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();renderDonorDonations()}"><button class="btn btn-outline" type="button" onclick="renderDonorDonations()">Search</button></div>
+    <div class="donation-filter-tabs" role="tablist" aria-label="Filter donations by review status">${filterTabs.map(([value, label]) => `<button type="button" role="tab" aria-selected="${filter === value}" class="donation-filter-tab${filter === value ? " active" : ""}" onclick="setDonorDonationReviewFilter('${value}')">${label}${value === "PENDING" ? ` (${pendingCount})` : ""}</button>`).join("")}</div>
+    ${emptyMessage ? `<div class="empty donor-donations-empty">${esc(emptyMessage)}</div>` : `<div class="medicine-grid donor-donations-grid">${donationCards}</div>`}`);
+}
+
+function setDonorDonationReviewFilter(filter) {
+  if (!["ALL", "PENDING", "VERIFIED", "REJECTED"].includes(filter)) return;
+  donorDonationReviewFilter = filter;
+  renderDonorDonations();
+}
+
+function updateDonorDonationSearch(value) {
+  donorDonationSearch = String(value || "");
 }
 function startRequest(medicineId, button) {
   const name = button?.dataset.name || "medicine";
