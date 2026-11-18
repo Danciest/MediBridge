@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check app.js && node --check middleware/auth.js && node --check routes/auth.js && node --check routes/medicines.js && node --check routes/requests.js && node --check routes/rewards.js && node --check routes/adminRewards.js && node --check routes/admin.js && node --check routes/reports.js && node --check services/rewardService.js"
+    "check": "node --check server.js && node --check public/app.js && node --check public/api-client.js && node --check middleware/auth.js && node --check routes/auth.js && node --check routes/medicines.js && node --check routes/requests.js && node --check routes/rewards.js && node --check routes/adminRewards.js && node --check routes/admin.js && node --check routes/reports.js && node --check services/rewardService.js"
   },
   "keywords": [],
   "author": "",

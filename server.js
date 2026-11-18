@@ -20,7 +20,11 @@ const adminRoutes = require("./routes/admin");
 const reportRoutes = require("./routes/reports");
 const { protect, authorizeRoles } = require("./middleware/auth");
 
+const path = require("path");
+
+
 const app = express();
+app.use(express.static(path.join(__dirname, "public")));
 app.disable("x-powered-by");
 if (process.env.TRUST_PROXY_HOPS !== undefined) {
     const proxyHops = Number(process.env.TRUST_PROXY_HOPS);

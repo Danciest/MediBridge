@@ -1,8 +1,10 @@
 (() => {
-  const configured = window.MEDIBRIDGE_API_URL || "http://localhost:5000/api";
+  const configured = window.MEDIBRIDGE_API_URL || "/api";
   const baseUrl = configured.replace(/\/$/, "");
   const tokenKey = "mb_token";
   const userKey = "mb_user";
+
+  
 
   function clearSession() {
     sessionStorage.removeItem(tokenKey);
